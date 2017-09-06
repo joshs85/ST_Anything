@@ -351,9 +351,9 @@ private void createChildDevice(String deviceName, String deviceNumber) {
                 	break
          		case "switch": 
                 	deviceHandlerName = "Child Switch" 
-            case "blind": 
-                  deviceHandlerName = "Child Blind" 
-                  break
+                case "blind": 
+                    deviceHandlerName = "Child Blind" 
+                    break
          		case "dimmerSwitch": 
                 	deviceHandlerName = "Child Dimmer Switch" 
                 	break
