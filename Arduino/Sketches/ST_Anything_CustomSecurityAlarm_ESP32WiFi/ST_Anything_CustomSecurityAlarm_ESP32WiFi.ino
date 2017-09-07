@@ -219,7 +219,7 @@ static st::EX_Alarm               executor1(F("alarm1"), PIN_ALARM_1, LOW, false
   st::InterruptSensor::debug=true;
 
   //Start Watchdog Timer
-  esp_task_wdt_init();
+  //esp_task_wdt_init();
   //*****************************************************************************
   //Initialize the "Everything" Class
   //*****************************************************************************
