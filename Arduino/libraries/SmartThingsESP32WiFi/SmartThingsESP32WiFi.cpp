@@ -14,8 +14,10 @@
 
 namespace st
 {
+	int SmartThingsESP32WiFi::disconnectCounter = 0;
+
 	//*******************************************************************************
-	// SmartThingsESP32WiFI Constructor - Static IP
+	// SmartThingsESP32WiFi Constructor - Static IP
 	//*******************************************************************************
 	SmartThingsESP32WiFi::SmartThingsESP32WiFi(String ssid, String password, IPAddress localIP, IPAddress localGateway, IPAddress localSubnetMask, IPAddress localDNSServer, uint16_t serverPort, IPAddress hubIP, uint16_t hubPort, SmartThingsCallout_t *callout, String shieldType, bool enableDebug, int transmitInterval) :
 		SmartThingsEthernet(localIP, localGateway, localSubnetMask, localDNSServer, serverPort, hubIP, hubPort, callout, shieldType, enableDebug, transmitInterval, false),
@@ -70,12 +72,18 @@ namespace st
 		case SYSTEM_EVENT_STA_DISCONNECTED:
 			Serial.println("WiFi lost connection.  Attempting to reconnect...");
 			WiFi.reconnect();
+			disconnectCounter++;
+			if (disconnectCounter > 10) {
+				Serial.println("We have recieved the STA_DISCONNECTED event over 10 times now.  Reboot...");
+				ESP.restart();
+			}
 			break;
 		case SYSTEM_EVENT_STA_START:
 			Serial.println("ESP32 station start");
 			break;
 		case SYSTEM_EVENT_STA_CONNECTED:
 			Serial.println("ESP32 station connected to AP");
+			disconnectCounter = 0;
 			break;
 		}
 

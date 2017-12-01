@@ -17,6 +17,7 @@
  *    Date        Who            What
  *    ----        ---            ----
  *    2017-06-10  Dan Ogorchock  Original Creation
+ *    2017-08-23  Allan (vseven) Added a generateEvent routine that gets info from the parent device.  This routine runs each time the value is updated which can lead to other modifications of the device.
  *
  * 
  */
@@ -27,6 +28,10 @@ metadata {
 		capability "Relay Switch"
 		capability "Actuator"
 		capability "Sensor"
+
+		attribute "lastUpdated", "String"
+
+		command "generateEvent", ["string", "string"]
 	}
 
 	tiles(scale: 2) {
@@ -42,24 +47,15 @@ metadata {
 			}
 		}
         
-/*        multiAttributeTile(name:"switch", type: "lighting", width: 6, height: 4, canChangeIcon: true){
-			tileAttribute ("device.switch", key: "PRIMARY_CONTROL") {
-				attributeState "on", label:'${name}', action:"switch.off", icon:"st.switches.switch.on", backgroundColor:"#00a0dc", nextState:"turningOff"
-				attributeState "off", label:'${name}', action:"switch.on", icon:"st.switches.switch.off", backgroundColor:"#ffffff", nextState:"turningOn"
-				attributeState "turningOn", label:'${name}', action:"switch.off", icon:"st.switches.switch.on", backgroundColor:"#00a0dc", nextState:"turningOff"
-				attributeState "turningOff", label:'${name}', action:"switch.on", icon:"st.switches.switch.off", backgroundColor:"#ffffff", nextState:"turningOn"
-			}
-			tileAttribute ("device.level", key: "SLIDER_CONTROL") {
-				attributeState "level", action:"switch level.setLevel"
-			}
-		}
-*/        
  		valueTile("level", "device.level", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
 			state "level", label:'${currentValue} %', unit:"%", backgroundColor:"#ffffff"
 		}
+ 		valueTile("lastUpdated", "device.lastUpdated", inactiveLabel: false, decoration: "flat", width: 4, height: 2) {
+    		state "default", label:'Last Updated ${currentValue}', backgroundColor:"#ffffff"
+        }
        
 		main(["switch"])
-		details(["switch", "level"])       
+		details(["switch", "level", "lastUpdated"])       
 	}
 }
 
@@ -83,4 +79,14 @@ def setLevel(value) {
 	sendEvent(name: "level", value: level, unit: "%")
     
     parent.childSetLevel(device.deviceNetworkId, level)
+}
+
+def generateEvent(String name, String value) {
+	//log.debug("Passed values to routine generateEvent in device named $device: Name - $name  -  Value - $value")
+    // The name coming in from ST_Anything will be "dimmerSwitch", but we want to the ST standard "switch" attribute for compatibility with normal SmartApps
+	sendEvent(name: "switch", value: value)
+   	// Update lastUpdated date and time
+    def nowDay = new Date().format("MMM dd", location.timeZone)
+    def nowTime = new Date().format("h:mm a", location.timeZone)
+    sendEvent(name: "lastUpdated", value: nowDay + " at " + nowTime, displayed: false)
 }

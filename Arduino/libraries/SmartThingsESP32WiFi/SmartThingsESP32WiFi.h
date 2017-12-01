@@ -28,6 +28,7 @@ namespace st
 		//ESP32 WiFi Specific
 		char st_ssid[50];
 		char st_password[50];
+        static int disconnectCounter;	
 		boolean st_preExistingConnection = false;
 		WiFiServer st_server; //server
 		WiFiClient st_client; //client
@@ -38,7 +39,6 @@ namespace st
 		static void WiFiEvent(WiFiEvent_t event);
 
 	public:
-
 		//*******************************************************************************
 		/// @brief  SmartThings ESP32 WiFi Constructor - Static IP
 		///   @param[in] ssid - Wifi Network SSID

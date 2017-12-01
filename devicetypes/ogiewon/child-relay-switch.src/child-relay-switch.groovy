@@ -17,6 +17,7 @@
  *    Date        Who            What
  *    ----        ---            ----
  *    2017-04-16  Dan Ogorchock  Original Creation
+ *    2017-08-23  Allan (vseven) Added a generateEvent routine that gets info from the parent device.  This routine runs each time the value is updated which can lead to other modifications of the device.
  *
  * 
  */
@@ -26,6 +27,14 @@ metadata {
 		capability "Relay Switch"
 		capability "Actuator"
 		capability "Sensor"
+
+		attribute "lastUpdated", "String"
+
+		command "generateEvent", ["string", "string"]
+	}
+
+	simulator {
+
 	}
 
 	tiles(scale: 2) {
@@ -36,6 +45,9 @@ metadata {
 				attributeState "turningOn", label:'${name}', action:"switch.off", icon:"st.switches.switch.on", backgroundColor:"#00A0DC", nextState:"turningOff"
 				attributeState "turningOff", label:'${name}', action:"switch.on", icon:"st.switches.switch.off", backgroundColor:"#ffffff", nextState:"turningOn"
 			}
+ 			tileAttribute("device.lastUpdated", key: "SECONDARY_CONTROL") {
+    				attributeState("default", label:'    Last updated ${currentValue}',icon: "st.Health & Wellness.health9")
+            }
 		}
 	}
 }
@@ -46,4 +58,14 @@ void on() {
 
 void off() {
 	parent.childRelayOff(device.deviceNetworkId)
+}
+
+def generateEvent(String name, String value) {
+	//log.debug("Passed values to routine generateEvent in device named $device: Name - $name  -  Value - $value")
+	// Update device
+	sendEvent(name: name, value: value)
+   	// Update lastUpdated date and time
+    def nowDay = new Date().format("MMM dd", location.timeZone)
+    def nowTime = new Date().format("h:mm a", location.timeZone)
+    sendEvent(name: "lastUpdated", value: nowDay + " at " + nowTime, displayed: false)
 }

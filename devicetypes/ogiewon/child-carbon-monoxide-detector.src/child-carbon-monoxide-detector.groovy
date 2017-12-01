@@ -17,14 +17,23 @@
  *    Date        Who            What
  *    ----        ---            ----
  *    2017-04-19  Dan Ogorchock  Original Creation
+ *    2017-08-23  Allan (vseven) Added a generateEvent routine that gets info from the parent device.  This routine runs each time the value is updated which can lead to other modifications of the device.
  *
  * 
  */
 metadata {
 	definition (name: "Child Carbon Monoxide Detector", namespace: "ogiewon", author: "Dan Ogorchock") {
 		capability "Carbon Monoxide Detector"
-        capability "Smoke Detector"
+		capability "Smoke Detector"
 		capability "Sensor"
+
+		attribute "lastUpdated", "String"
+
+		command "generateEvent", ["string", "string"]
+	}
+
+	simulator {
+
 	}
 
 	tiles(scale: 2) {
@@ -33,7 +42,19 @@ metadata {
 				attributeState("clear", label:"clear", icon:"st.alarm.carbon-monoxide.clear", backgroundColor:"#ffffff")
 				attributeState("detected", label:"monoxide", icon:"st.alarm.carbon-monoxide.carbon-monoxide", backgroundColor:"#e86d13")
 			}
+ 			tileAttribute("device.lastUpdated", key: "SECONDARY_CONTROL") {
+    				attributeState("default", label:'    Last updated ${currentValue}',icon: "st.Health & Wellness.health9")
+            }
 		}
 	}
+}
 
+def generateEvent(String name, String value) {
+	//log.debug("Passed values to routine generateEvent in device named $device: Name - $name  -  Value - $value")
+	// Update device
+	sendEvent(name: name, value: value)
+   	// Update lastUpdated date and time
+    def nowDay = new Date().format("MMM dd", location.timeZone)
+    def nowTime = new Date().format("h:mm a", location.timeZone)
+    sendEvent(name: "lastUpdated", value: nowDay + " at " + nowTime, displayed: false)
 }
