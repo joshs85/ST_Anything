@@ -1,12 +1,12 @@
 //******************************************************************************************
 //  File: EX_Blind.cpp
-//  Authors: Dan G Ogorchock & Daniel J Ogorchock (Father and Son)
+//  Authors: Josh S
 //
-//  Summary:  EX_Blind is a class which implements the SmartThings "Switch" device capability.
+//  Summary:  EX_Blind is a class which implements the SmartThings "Blind" device capability.
 //			  It inherits from the st::Executor class.
 //
 //			  Create an instance of this class in your sketch's global variable section
-//			  For Example:  st::EX_Blind executor1("switch", PIN_SWITCH, LOW, true);
+//			  For Example:  st::EX_Blind executor1("blind", PIN_SWITCH, LOW, true);
 //
 //			  st::EX_Blind() constructor requires the following arguments
 //				- String &name - REQUIRED - the name of the object - must match the Groovy ST_Anything DeviceType tile name
@@ -18,7 +18,7 @@
 //
 //    Date        Who            What
 //    ----        ---            ----
-//    2015-01-03  Dan & Daniel   Original Creation
+//    2017-04-03  Josh S         Original Creation
 //
 //
 //******************************************************************************************
