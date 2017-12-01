@@ -73,13 +73,13 @@ metadata {
             }
 
 void open() {
-	parent.childOpen(device.deviceNetworkId)
+	parent.childCustom(device.deviceNetworkId, "open")
     //sendEvent(name: "windowShade", value: "open")
     //sendEvent(name: "switch", value: "on")
 }
 
 void close() {
-	parent.childClose(device.deviceNetworkId)
+	parent.childCustom(device.deviceNetworkId, "close")
     //sendEvent(name: "windowShade", value: "closed")
     //sendEvent(name: "switch", value: "off")
 }
