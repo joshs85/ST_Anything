@@ -88,10 +88,10 @@
 //******************************************************************************************
 String str_ssid     = "";                           //  <---You must edit this line!
 String str_password = "";                   //  <---You must edit this line!
-IPAddress ip(192, 168, 3, 234);       //Device IP Address       //  <---You must edit this line!
-IPAddress gateway(192, 168, 3, 1);    //Router gateway          //  <---You must edit this line!
-IPAddress subnet(255, 255, 255, 0);   //LAN subnet mask         //  <---You must edit this line!
-IPAddress dnsserver(192, 168, 3, 1);  //DNS server              //  <---You must edit this line!
+//IPAddress ip(192, 168, 3, 234);       //Device IP Address       //  <---You must edit this line!
+//IPAddress gateway(192, 168, 3, 1);    //Router gateway          //  <---You must edit this line!
+//IPAddress subnet(255, 255, 255, 0);   //LAN subnet mask         //  <---You must edit this line!
+//IPAddress dnsserver(192, 168, 3, 1);  //DNS server              //  <---You must edit this line!
 const unsigned int serverPort = 8090; // port to run the http server on
 
 // Smartthings Hub Information
@@ -169,10 +169,10 @@ void setup()
   
   //Create the SmartThings ESP8266WiFi Communications Object
     //STATIC IP Assignment - Recommended
-    st::Everything::SmartThing = new st::SmartThingsESP8266WiFi(str_ssid, str_password, ip, gateway, subnet, dnsserver, serverPort, hubIp, hubPort, st::receiveSmartString);
+    //st::Everything::SmartThing = new st::SmartThingsESP8266WiFi(str_ssid, str_password, ip, gateway, subnet, dnsserver, serverPort, hubIp, hubPort, st::receiveSmartString);
  
     //DHCP IP Assigment - Must set your router's DHCP server to provice a static IP address for this device's MAC address
-    //st::Everything::SmartThing = new st::SmartThingsESP8266WiFi(str_ssid, str_password, serverPort, hubIp, hubPort, st::receiveSmartString);
+    st::Everything::SmartThing = new st::SmartThingsESP8266WiFi(str_ssid, str_password, serverPort, hubIp, hubPort, st::receiveSmartString);
 
   //Run the Everything class' init() routine which establishes WiFi communications with SmartThings Hub
   st::Everything::init();
