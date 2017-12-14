@@ -40,6 +40,9 @@ metadata {
 				attributeState "opening", label:'${name}', action:"windowShade.close", icon:"st.switches.switch.on", backgroundColor:"#00A0DC", nextState:"closing"
 				attributeState "closing", label:'${name}', action:"windowShade.open", icon:"st.switches.switch.off", backgroundColor:"#ffffff", nextState:"opening"
 			}
+            tileAttribute("device.lastUpdated", key: "SECONDARY_CONTROL") {
+                attributeState("default", label:'    Last updated ${currentValue}',icon: "st.Health & Wellness.health9")
+            }
 		}
         
        	standardTile("open", "generic", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
@@ -74,14 +77,10 @@ metadata {
 
 void open() {
 	parent.childCustom(device.deviceNetworkId, "open")
-    //sendEvent(name: "windowShade", value: "open")
-    //sendEvent(name: "switch", value: "on")
 }
 
 void close() {
 	parent.childCustom(device.deviceNetworkId, "close")
-    //sendEvent(name: "windowShade", value: "closed")
-    //sendEvent(name: "switch", value: "off")
 }
 
 void my() {
@@ -94,4 +93,14 @@ void on(){
 
 void off(){
 	close()
+}
+
+def generateEvent(String name, String value) {
+	//log.debug("Passed values to routine generateEvent in device named $device: Name - $name  -  Value - $value")
+	// Update device
+	sendEvent(name: name, value: value)
+   	 // Update lastUpdated date and time
+    def nowDay = new Date().format("MMM dd", location.timeZone)
+    def nowTime = new Date().format("h:mm a", location.timeZone)
+    sendEvent(name: "lastUpdated", value: nowDay + " at " + nowTime, displayed: false)
 }
