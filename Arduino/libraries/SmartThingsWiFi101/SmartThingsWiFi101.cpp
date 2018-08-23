@@ -8,6 +8,9 @@
 //	History
 //	2017-05-06  Dan Ogorchock  Created
 //  2017-05-29  Dan Ogorchock  Implemented Low Power Mode to reduce power usage/chip heat
+//  2018-01-01  Dan Ogorchock  Added WiFi.RSSI() data collection
+//  2018-01-06  Dan Ogorchock  Simplified the MAC address printout to prevent confusion
+//  2018-02-03  Dan Ogorchock  Support for Hubitat
 //*******************************************************************************
 
 #include "SmartThingsWiFi101.h"
@@ -93,7 +96,7 @@ namespace st
 		Serial.println(st_serverPort);
 		WiFi.macAddress(mac);
 		Serial.print(F("MAC Address = "));
-		sprintf(buf, "%02X:%02X:%02X:%02X:%02X:%02X", mac[5], mac[4], mac[3], mac[2], mac[1], mac[0]);
+		sprintf(buf, "%02X%02X%02X%02X%02X%02X", mac[5], mac[4], mac[3], mac[2], mac[1], mac[0]);
 		Serial.println(buf);
 		Serial.println();
 
@@ -105,9 +108,14 @@ namespace st
 		Serial.println(st_hubIP);
 		Serial.print(F("hubPort = "));
 		Serial.println(st_hubPort);
+		Serial.print(F("RSSI = "));
+		Serial.println(WiFi.RSSI());
 		Serial.println();
 		Serial.println(F("SmartThingsWiFi101: Intialized"));
 		Serial.println();
+
+		RSSIsendInterval = 5000;
+		previousMillis = millis() - RSSIsendInterval;
 	}
 
 	//*****************************************************************************
@@ -117,6 +125,7 @@ namespace st
 	{
 		String readString;
 		String tempString;
+		String strRSSI;
 
 		if (WiFi.status() != WL_CONNECTED)
 		{
@@ -127,6 +136,27 @@ namespace st
 				Serial.println(F("**********************************************************"));
 				WiFi.end();
 				init();
+			}
+		}
+		else
+		{
+			if (millis() - previousMillis > RSSIsendInterval)
+			{
+
+				previousMillis = millis();
+
+				if (RSSIsendInterval < RSSI_TX_INTERVAL)
+				{
+					RSSIsendInterval = RSSIsendInterval + 1000;
+				}
+
+				strRSSI = String("rssi ") + String(WiFi.RSSI());
+				send(strRSSI);
+
+				if (_isDebugEnabled)
+				{
+					Serial.println(strRSSI);
+				}
 			}
 		}
 
@@ -195,6 +225,7 @@ namespace st
 					Serial.println(tempString);
 				}
 				//Pass the message to user's SmartThings callout function
+				tempString.replace("%20", " ");  //Clean up for Hubitat
 				_calloutFunction(tempString);
 			}
 

@@ -1,34 +1,47 @@
 //******************************************************************************************
-//  File: ST_Anything_AlarmPanel_ESP8266WiFi.ino
+//  File: ST_Anything_Multiples_ESP32WiFi.ino
 //  Authors: Dan G Ogorchock & Daniel J Ogorchock (Father and Son)
 //
 //  Summary:  This Arduino Sketch, along with the ST_Anything library and the revised SmartThings 
-//            library, demonstrates the ability of one NodeMCU ESP8266 to 
-//            implement a multi input/output custom device for integration into SmartThings.
+//            library, demonstrates the ability of one ESP32 to implement 
+//            a multi input/output custom device for integration into SmartThings.
 //            The ST_Anything library takes care of all of the work to schedule device updates
-//            as well as all communications with the NodeMCU ESP8266's WiFi.
+//            as well as all communications with the ESP32's WiFi.
 //
-//            ST_Anything_AlarmPanel implements the following ST Capabilities as a demo of replacing an alarm panel with a single NodeMCU ESP8266
-//              - 7 x Contact Sensor devices (used to monitor magnetic door sensors)
-//              - 1 x Motion device (using simple digital input)
-//              - 1 x Smoke Detector devices (using simple digital input)
-//              - 1 x Alarm (Siren only) device (using a simple digital output attached to a relay)
+//            ST_Anything_Multiples implements the following ST Capabilities as a demo of what is possible with a single ESP32
+//              - 2 x Water Sensor devices (using an analog input pin to measure voltage from a water detector board)
+//              - 2 x Illuminance Measurement devices (using a photoresitor attached to ananlog input)
+//              - 1 x Voltage Measurement devices (using a photoresitor attached to ananlog input)
+//              - 1 x Door Control devices (used typically for Garage Doors - input pin (contact sensor) and output pin (relay switch)
+//              - 2 x Contact Sensor devices (used to monitor magnetic door sensors)
+//              - 1 x Switch devices (used to turn on a digital output (e.g. LED, relay, etc...)
+//              - 1 x Smoke Detector device (using simple digital input)
+//              - 1 x MQ-2 Smoke Detector devices (using simple analog input compared to user defined limit)
+//              - 1 x Carbon Monoxide Detector device (using simple digital input)
+//              - 2 x Motion devices (used to detect motion)
+//              - 1 x Temperature Measurement device (Temperature from DHT22 device)
+//              - 1 x Humidity Measurement device (Humidity from DHT22 device)
+//              - 1 x Temperature Measurement device (Temperature from Dallas Semi 1-Wire DS18B20 device)
+//              - 1 x Relay Switch device (used to turn on a digital output for a set number of cycles And On/Off times (e.g.relay, etc...))
+//              - 2 x Button devices (sends "pushed" if held for less than 1 second, else sends "held"
+//              - 2 x Alarm devices - 1 siren only, 1 siren and strobe (using simple digital outputs)
+//
 //    
 //  Change History:
 //
 //    Date        Who            What
 //    ----        ---            ----
-//    2017-04-26  Dan Ogorchock  Original Creation
-
+//    2017-08-14  Dan Ogorchock  Original Creation - Adapted from ESP8266 to work with ESP32 board
+//    2018-02-09  Dan Ogorchock  Added support for Hubitat Elevation Hub
+//
+//   Special thanks to Joshua Spain for his contributions in porting ST_Anything to the ESP32!
+//
 //******************************************************************************************
 //******************************************************************************************
-// SmartThings Library for ESP8266WiFi
+// SmartThings Library for ESP32WiFi
 //******************************************************************************************
 #include <SmartThingsESP32WiFi.h>
-//#include <esp_task_wdt.h>
 
-//******************************************************************************************
-// ST_Anything Library 
 //******************************************************************************************
 #include <Constants.h>       //Constants.h is designed to be modified by the end user to adjust behavior of the ST_Anything library
 #include <Device.h>          //Generic Device Class, inherited by Sensor and Executor classes
@@ -141,6 +154,16 @@ void callback(const String &msg)
 //******************************************************************************************
 void setup()
 {
+  //******************************************************************************************
+  // Setup the default values for the ADC.  Used for analog voltage reads.
+  //  Notes:  analogReadResolution(12) sets the resolution for all pins. 12 = 0-4095, 11 = 0-2047, 10 = 0-1024, 9 = 0-512 
+  //          analogSetAttenuation(ADC_11db) sets the attenuation for all pins.  11db = 0-3.3v, 6dB range = 0-2.2v, 2.5db = 0-1.5v, 0db = 0-1v
+  //          analogSetPinAttenuation(A7, ADC_11db) sets the attenuation for individual pins.
+  //******************************************************************************************
+  
+  analogReadResolution(11);        // Default of 12 is not very linear.  Recommended to use 10 or 11 depending on needed resolution.
+  analogSetAttenuation(ADC_6db);   // Default is 11db which is very noisy.  Recommended to use 2.5 or 6.
+  
   //******************************************************************************************
   //Declare each Device that is attached to the Arduino
   //  Notes: - For each device, there is typically a corresponding "tile" defined in your 
@@ -277,7 +300,7 @@ static st::EX_Alarm               executor1(F("alarm1"), PIN_ALARM_1, LOW, false
   //Initialize each of the devices which were added to the Everything Class
   //*****************************************************************************
   st::Everything::initDevices();
-  //pinMode(LED_BUILTIN, OUTPUT);
+
 }
 
 //******************************************************************************************
@@ -288,9 +311,5 @@ void loop()
   //*****************************************************************************
   //Execute the Everything run method which takes care of "Everything"
   //*****************************************************************************
-  //digitalWrite(LED_BUILTIN, HIGH);
-  //esp_task_wdt_feed();
   st::Everything::run();
-  //digitalWrite(LED_BUILTIN, LOW);
-  //delay(100);
 }

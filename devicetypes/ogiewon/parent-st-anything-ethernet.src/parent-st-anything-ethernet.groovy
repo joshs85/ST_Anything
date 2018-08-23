@@ -25,8 +25,16 @@
  *    2017-08-24  Allan (vseven) Change the way values are pushed to child devices to allow a event to be executed allowing future customization
  *    2007-09-24  Allan (vseven) Added RGB LED light support with a setColorRGB routine
  *    2017-10-07  Dan Ogorchock  Cleaned up formatting for readability
- *    2007-09-24  Allan (vseven) Added RGBW LED strip support with a setColorRGBW routine
- *
+ *    2017-09-24  Allan (vseven) Added RGBW LED strip support with a setColorRGBW routine
+ *    2017-12-29  Dan Ogorchock  Added WiFi RSSI value per request from ST user @stevesell
+ *    2018-02-15  Dan Ogorchock  Added @saif76's Ultrasonic Sensor
+ *    2018-02-25  Dan Ogorchock  Added Child Presence Sensor
+ *    2018-03-03  Dan Ogorchock  Added Child Power Meter
+ *    2018-06-05  Dan Ogorchock  Simplified Parent & Child Device Handlers
+ *    2018-06-24  Dan Ogorchock  Added Child Servo
+ *    2018-07-01  Dan Ogorchock  Added Pressure Measurement
+ *    2018-08-06  Dan Ogorchock  Added MAC Address formatting before setting deviceNetworkID
+ *	
  */
  
 metadata {
@@ -35,6 +43,9 @@ metadata {
         capability "Refresh"
         capability "Button"
         capability "Holdable Button"
+        capability "Signal Strength"
+        
+        command "sendData", ["string"]
 	}
 
     simulator {
@@ -61,7 +72,19 @@ metadata {
         valueTile("numberOfButtons", "device.numberOfButtons", inactiveLabel: false, width: 2, height: 2) {
 			state "numberOfButtons", label:'${currentValue} buttons', unit:""
 		}
- 
+
+        valueTile("rssi", "device.rssi", width: 2, height: 2) {
+			state("rssi", label:'RSSI ${currentValue}', unit:"",
+				backgroundColors:[
+					[value: -30, color: "#006600"],
+					[value: -45, color: "#009900"],
+					[value: -60, color: "#99cc00"],
+					[value: -70, color: "#ff9900"],
+					[value: -90, color: "#ff0000"]
+				]
+			)
+		}
+
 		childDeviceTiles("all")
 	}
 }
@@ -96,6 +119,14 @@ def parse(String description) {
 			log.debug results
 			return results
         }
+
+		if (name.startsWith("rssi")) {
+			//log.debug "In parse: RSSI name = ${name}, value = ${value}"
+           	results = createEvent(name: name, value: value, displayed: false)
+            log.debug results
+			return results
+        }
+
 
         def isChild = containsDigit(name)
    		//log.debug "Name = ${name}, isChild = ${isChild}, namebase = ${namebase}, namenum = ${namenum}"      
@@ -141,21 +172,8 @@ def parse(String description) {
             
             if (childDevice != null) {
                 //log.debug "parse() found child device ${childDevice.deviceNetworkId}"
-                
-//                if (namebase == "temperature") {
-//                	double tempC = fahrenheitToCelsius(value.toFloat())  //convert from Farenheit to Celsius
-//                   	value = tempC.round(2)
-//				}
-                
-//                if (namebase == "dimmerSwitch") { namebase = "switch"}  //use a "switch" attribute to maintain standards
-//                childDevice.sendEvent(name: namebase, value: value)
-                childDevice.generateEvent(namebase, value)
+                childDevice.parse("${namebase} ${value}")
 				log.debug "${childDevice.deviceNetworkId} - name: ${namebase}, value: ${value}"
-                //If event was dor a "Door Control" device, also update the child door control device's "Contact Sensor" to keep everything in synch
-//                if (namebase == "doorControl") {
-//                	childDevice.sendEvent(name: "contact", value: value)
-//                    log.debug "${childDevice.deviceNetworkId} - name: contact, value: ${value}"
-//                }
             }
             else  //must not be a child, perform normal update
             {
@@ -179,6 +197,10 @@ private getHostAddress() {
     return ip + ":" + port
 }
 
+def sendData(message) {
+    sendEthernet(message) 
+}
+
 def sendEthernet(message) {
 	log.debug "Executing 'sendEthernet' ${message}"
 	if (settings.ip != null && settings.port != null) {
@@ -195,6 +217,7 @@ def sendEthernet(message) {
 }
 
 // handle commands
+<<<<<<< HEAD
 def childAlarmOn(String dni) {
     def name = dni.split("-")[-1]
     log.debug "childAlarmOn($dni), name = ${name}"
@@ -296,6 +319,8 @@ void childCustom(String dni, String command) {
     sendEthernet("${name} ${command}")
 }
 
+=======
+>>>>>>> f64fef1a716679e8c5230c33161e14155e7307e4
 def configure() {
 	log.debug "Executing 'configure()'"
     updateDeviceNetworkID()
@@ -324,6 +349,7 @@ def initialize() {
 	log.debug "Executing 'initialize()'"
     sendEvent(name: "numberOfButtons", value: numButtons)
 }
+
 def updated() {
 	if (!state.updatedLastRanAt || now() >= state.updatedLastRanAt + 5000) {
 		state.updatedLastRanAt = now()
@@ -338,12 +364,13 @@ def updated() {
 	}
 }
 
-
 def updateDeviceNetworkID() {
 	log.debug "Executing 'updateDeviceNetworkID'"
-    if(device.deviceNetworkId!=mac) {
-    	log.debug "setting deviceNetworkID = ${mac}"
-        device.setDeviceNetworkId("${mac}")
+    def formattedMac = mac.toUpperCase()
+    formattedMac = formattedMac.replaceAll(":", "")
+    if(device.deviceNetworkId!=formattedMac) {
+        log.debug "setting deviceNetworkID = ${formattedMac}"
+        device.setDeviceNetworkId("${formattedMac}")
 	}
     //Need deviceNetworkID updated BEFORE we can create Child Devices
 	//Have the Arduino send an updated value for every device attached.  This will auto-created child devices!
@@ -414,6 +441,21 @@ private void createChildDevice(String deviceName, String deviceNumber) {
                 	break    
          		case "doorControl": 
                 		deviceHandlerName = "Child Door Control" 
+                	break
+         		case "ultrasonic": 
+                		deviceHandlerName = "Child Ultrasonic Sensor" 
+                	break
+         		case "presence": 
+                		deviceHandlerName = "Child Presence Sensor" 
+                	break
+         		case "power": 
+                		deviceHandlerName = "Child Power Meter" 
+                	break
+         		case "servo": 
+                		deviceHandlerName = "Child Servo" 
+                	break
+         		case "pressure": 
+                		deviceHandlerName = "Child Pressure Measurement" 
                 	break
 			default: 
                 		log.error "No Child Device Handler case for ${deviceName}"

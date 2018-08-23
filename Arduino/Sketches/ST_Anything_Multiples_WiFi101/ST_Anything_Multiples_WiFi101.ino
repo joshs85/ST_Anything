@@ -12,7 +12,7 @@
 //              - 2 x Door Control devices (used typically for Garage Doors - input pin (contact sensor) and output pin (relay switch)
 //              - 2 x Contact Sensor devices (used to monitor magnetic door sensors)
 //              - 2 x Switch devices (used to turn on a digital output (e.g. LED, relay, etc...)
-//              - 2 x Water Sensor devices (using an analog input pin to measure voltage from a water detector baord)
+//              - 2 x Water Sensor devices (using an analog input pin to measure voltage from a water detector board)
 //              - 2 x Illuminance Measurement devices (using a photoresitor attached to ananlog input)
 //              - 2 x Voltage Measurement devices (using a photoresitor attached to ananlog input)
 //              - 2 x Smoke Detector devices (using simple digital input)
@@ -33,6 +33,7 @@
 //    Date        Who            What
 //    ----        ---            ----
 //    2017-05-06  Dan Ogorchock  New example sketch for use with the WiFi 101 shield or Adafruit ATWINC1500
+//    2018-02-09  Dan Ogorchock  Added support for Hubitat Elevation Hub
 //
 //******************************************************************************************
 //******************************************************************************************
@@ -135,9 +136,12 @@ IPAddress subnet(255, 255, 255, 0);   //LAN subnet mask          //  <---You mus
 IPAddress dnsserver(192, 168, 1, 1);  //DNS server               //  <---You must edit this line!
 const unsigned int serverPort = 8090; // port to run the http server on
 
-// Smartthings hub information
-IPAddress hubIp(192,168,1,149);       // smartthings hub ip      //  <---You must edit this line!
+// Smartthings / Hubitat Hub TCP/IP Address
+IPAddress hubIp(192, 168, 1, 149);    // smartthings/hubitat hub ip //  <---You must edit this line!
+
+// SmartThings / Hubitat Hub TCP/IP Address: UNCOMMENT line that corresponds to your hub, COMMENT the other
 const unsigned int hubPort = 39500;   // smartthings hub port
+//const unsigned int hubPort = 39501;   // hubitat hub port
 
 //******************************************************************************************
 //st::Everything::callOnMsgSend() optional callback routine.  This is a sniffer to monitor 

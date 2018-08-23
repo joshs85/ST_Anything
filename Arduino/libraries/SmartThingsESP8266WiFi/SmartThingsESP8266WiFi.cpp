@@ -6,6 +6,10 @@
 //
 //	History
 //	2017-02-10  Dan Ogorchock  Created
+//  2017-12-29  Dan Ogorchock  Added WiFi.RSSI() data collection
+//  2018-01-06  Dan Ogorchock  Simplified the MAC address printout to prevent confusion
+//  2018-01-06  Dan Ogorchock  Added OTA update capability
+//  2018-02-03  Dan Ogorchock  Support for Hubitat
 //*******************************************************************************
 
 #include "SmartThingsESP8266WiFi.h"
@@ -61,6 +65,10 @@ namespace st
 			Serial.println(F(""));
 			Serial.println(F("Initializing ESP8266 WiFi network.  Please be patient..."));
 
+			if (st_DHCP == false)
+			{
+				WiFi.config(st_localIP, st_localGateway, st_localSubnetMask, st_localDNSServer);
+			}
 			// attempt to connect to WiFi network
 			WiFi.begin(st_ssid, st_password);
 			Serial.print(F("Attempting to connect to WPA SSID: "));
@@ -74,11 +82,6 @@ namespace st
 
 		Serial.println();
 
-		if (st_DHCP == false)
-		{
-			WiFi.config(st_localIP, st_localGateway, st_localSubnetMask, st_localDNSServer);
-		}
-
 		st_server.begin();
 
 		Serial.println(F(""));
@@ -88,7 +91,9 @@ namespace st
 		Serial.print(F("serverPort = "));
 		Serial.println(st_serverPort);
 		Serial.print(F("MAC Address = "));
-		Serial.println(WiFi.macAddress());
+		String strMAC(WiFi.macAddress());
+		strMAC.replace(":", "");
+		Serial.println(strMAC);
 		Serial.println(F(""));
 		Serial.print(F("SSID = "));
 		Serial.println(st_ssid);
@@ -98,6 +103,12 @@ namespace st
 		Serial.println(st_hubIP);
 		Serial.print(F("hubPort = "));
 		Serial.println(st_hubPort);
+		Serial.print(F("RSSI = "));
+		Serial.println(WiFi.RSSI());
+
+		String("ESP8266_" + strMAC).toCharArray(st_devicename, sizeof(st_devicename));
+		WiFi.hostname(st_devicename);
+
 		Serial.println(F(""));
 		Serial.println(F("SmartThingsESP8266WiFI: Intialized"));
 		Serial.println(F(""));
@@ -106,6 +117,45 @@ namespace st
 		Serial.println(F("Disabling ESP8266 WiFi Access Point"));
 		Serial.println(F(""));
 		WiFi.mode(WIFI_STA);
+
+		RSSIsendInterval = 5000;
+		previousMillis = millis() - RSSIsendInterval;
+
+		// Setup OTA Updates
+
+		// Port defaults to 8266
+		// ArduinoOTA.setPort(8266);
+
+		// Hostname defaults to esp8266-[ChipID]
+		ArduinoOTA.setHostname(st_devicename);
+
+		// No authentication by default
+		//ArduinoOTA.setPassword((const char*)"123");
+
+		ArduinoOTA.onStart([]() {
+			Serial.println("Start");
+		});
+		ArduinoOTA.onEnd([]() {
+			Serial.println("\nEnd");
+		});
+		ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+			Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+		});
+		ArduinoOTA.onError([](ota_error_t error) {
+			Serial.printf("Error[%u]: ", error);
+			if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
+			else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
+			else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
+			else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
+			else if (error == OTA_END_ERROR) Serial.println("End Failed");
+		});
+		ArduinoOTA.begin();
+		Serial.println("ArduinoOTA Ready");
+		Serial.print("IP address: ");
+		Serial.println(WiFi.localIP());
+		Serial.print("ArduionOTA Host Name: ");
+		Serial.println(ArduinoOTA.getHostname());
+		Serial.println();
 	}
 
 	//*****************************************************************************
@@ -113,8 +163,12 @@ namespace st
 	//*****************************************************************************
 	void SmartThingsESP8266WiFi::run(void)
 	{
+
+		ArduinoOTA.handle();
+
 		String readString;
 		String tempString;
+		String strRSSI;
 
 		if (WiFi.isConnected() == false)
 		{
@@ -126,6 +180,27 @@ namespace st
 			}
 
 			//init();
+		}
+		else
+		{
+			if (millis() - previousMillis > RSSIsendInterval)
+			{
+
+				previousMillis = millis();
+
+				if (RSSIsendInterval < RSSI_TX_INTERVAL)
+				{
+					RSSIsendInterval = RSSIsendInterval + 1000;
+				}
+				
+				strRSSI = String("rssi ") + String(WiFi.RSSI());
+				send(strRSSI);
+
+				if (_isDebugEnabled)
+				{
+					Serial.println(strRSSI);
+				}
+			}
 		}
 
 		WiFiClient client = st_server.available();
@@ -193,6 +268,7 @@ namespace st
 					Serial.println(tempString);
 				}
 				//Pass the message to user's SmartThings callout function
+				tempString.replace("%20", " ");  //Clean up for Hubitat
 				_calloutFunction(tempString);
 			}
 

@@ -24,6 +24,7 @@
 //                               used with new Parent/Child Device Handlers (i.e. Composite DH)
 //    2017-05-25  Dan Ogorchock  Revised example sketch, taking into account limitations of NodeMCU GPIO pins
 //    2017-11-29  Dan Ogorchock  New example to showcase local control using momentary buttons
+//    2018-02-09  Dan Ogorchock  Added support for Hubitat Elevation Hub
 //
 //******************************************************************************************
 //******************************************************************************************
@@ -76,6 +77,9 @@
 //Define which Arduino Pins will be used for each device
 //******************************************************************************************
 
+#define PIN_RELAY_1 D5 //SmartThings Capability "Relay Switch"
+#define PIN_RELAY_2 D6 //SmartThings Capability "Relay Switch"
+#define PIN_RELAY_3 D7 //SmartThings Capability "Relay Switch"
 
 //---Begin Push Button declarations---
 #define MAX_PUSHBUTTONS 3
@@ -106,9 +110,12 @@ IPAddress subnet(255, 255, 255, 0);   //LAN subnet mask         //  <---You must
 IPAddress dnsserver(192, 168, 1, 1);  //DNS server              //  <---You must edit this line!
 const unsigned int serverPort = 8090; // port to run the http server on
 
-// Smartthings Hub Information
-IPAddress hubIp(192, 168, 1, 149);    // smartthings hub ip     //  <---You must edit this line!
+// Smartthings / Hubitat Hub TCP/IP Address
+IPAddress hubIp(192, 168, 1, 149);    // smartthings/hubitat hub ip //  <---You must edit this line!
+
+// SmartThings / Hubitat Hub TCP/IP Address: UNCOMMENT line that corresponds to your hub, COMMENT the other
 const unsigned int hubPort = 39500;   // smartthings hub port
+//const unsigned int hubPort = 39501;   // hubitat hub port
 
 //******************************************************************************************
 //st::Everything::callOnMsgSend() optional callback routine.  This is a sniffer to monitor 

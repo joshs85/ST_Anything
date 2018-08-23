@@ -28,6 +28,7 @@
 //    Date        Who            What
 //    ----        ---            ----
 //    2017-05-28  Dan Ogorchock  New example sketch for use with the Arduino MKR1000
+//    2018-02-09  Dan Ogorchock  Added support for Hubitat Elevation Hub
 //
 //******************************************************************************************
 //******************************************************************************************
@@ -100,15 +101,18 @@
 //****************************************************************************************** 
 String str_ssid     = "yourSSIDhere";                            //  <---You must edit this line!
 String str_password = "yourWiFiPasswordhere";                    //  <---You must edit this line!
-IPAddress ip(192, 168, 1, 233);       // Device IP Address       //  <---You must edit this line!
+IPAddress ip(192, 168, 1, 234);       // Device IP Address       //  <---You must edit this line!
 IPAddress gateway(192, 168, 1, 1);    //Router gateway           //  <---You must edit this line!
 IPAddress subnet(255, 255, 255, 0);   //LAN subnet mask          //  <---You must edit this line!
 IPAddress dnsserver(192, 168, 1, 1);  //DNS server               //  <---You must edit this line!
 const unsigned int serverPort = 8090; // port to run the http server on
 
-// Smartthings hub information
-IPAddress hubIp(192,168,1,149);       // smartthings hub ip      //  <---You must edit this line!
+// Smartthings / Hubitat Hub TCP/IP Address
+IPAddress hubIp(192, 168, 1, 149);    // smartthings/hubitat hub ip //  <---You must edit this line!
+
+// SmartThings / Hubitat Hub TCP/IP Address: UNCOMMENT line that corresponds to your hub, COMMENT the other
 const unsigned int hubPort = 39500;   // smartthings hub port
+//const unsigned int hubPort = 39501;   // hubitat hub port
 
 //******************************************************************************************
 //st::Everything::callOnMsgSend() optional callback routine.  This is a sniffer to monitor 

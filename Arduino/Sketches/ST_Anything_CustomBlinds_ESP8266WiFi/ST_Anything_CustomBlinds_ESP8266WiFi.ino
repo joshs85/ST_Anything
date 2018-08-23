@@ -19,7 +19,8 @@
 //    Date        Who            What
 //    ----        ---            ----
 //    2017-04-26  Dan Ogorchock  Original Creation
-
+//    2018-02-09  Dan Ogorchock  Added support for Hubitat Elevation Hub
+//
 //******************************************************************************************
 //******************************************************************************************
 // SmartThings Library for ESP8266WiFi
@@ -94,9 +95,17 @@ String str_password = "";                   //  <---You must edit this line!
 //IPAddress dnsserver(192, 168, 3, 1);  //DNS server              //  <---You must edit this line!
 const unsigned int serverPort = 8090; // port to run the http server on
 
+<<<<<<< HEAD:Arduino/Sketches/ST_Anything_CustomBlinds_ESP8266WiFi/ST_Anything_CustomBlinds_ESP8266WiFi.ino
 // Smartthings Hub Information
 IPAddress hubIp(192, 168, 3, 174);    // smartthings hub ip     //  <---You must edit this line!
+=======
+// Smartthings / Hubitat Hub TCP/IP Address
+IPAddress hubIp(192, 168, 1, 149);    // smartthings/hubitat hub ip //  <---You must edit this line!
+
+// SmartThings / Hubitat Hub TCP/IP Address: UNCOMMENT line that corresponds to your hub, COMMENT the other
+>>>>>>> f64fef1a716679e8c5230c33161e14155e7307e4:Arduino/Sketches/ST_Anything_AlarmPanel_ESP8266WiFi/ST_Anything_AlarmPanel_ESP8266WiFi.ino
 const unsigned int hubPort = 39500;   // smartthings hub port
+//const unsigned int hubPort = 39501;   // hubitat hub port
 
 //******************************************************************************************
 //st::Everything::callOnMsgSend() optional callback routine.  This is a sniffer to monitor 
