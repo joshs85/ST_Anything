@@ -1,6 +1,8 @@
 /**
  *   HubDuino_Parent_ThingShield.groovy
  *
+ *  https://raw.githubusercontent.com/DanielOgorchock/ST_Anything/master/HubDuino/Drivers/hubduino-parent-thingshield.groovy
+ *
  *  Copyright 2017 Dan G Ogorchock 
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
@@ -28,6 +30,8 @@
  *    2018-06-02  Dan Ogorchock  Revised/Simplified for Hubitat Composite Driver Model
  *    2018-06-24  Dan Ogorchock  Added Child Servo
  *    2018-07-01  Dan Ogorchock  Added Pressure Measurement
+ *    2018-09-22  Dan Ogorchock  Added preference for debug logging
+ *    2019-02-05  Dan Ogorchock  Added Child Energy Meter
  *	
  */
  
@@ -48,19 +52,25 @@ metadata {
     // Preferences
 	preferences {
 		input "numButtons", "number", title: "Number of Buttons", description: "Number of Buttons, 0 to n", required: true, displayDuringSetup: true
+        input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: true
 	}
+}
+
+def logsOff(){
+    log.warn "debug logging disabled..."
+    device.updateSetting("logEnable",[value:"false",type:"bool"])
 }
 
 // parse events into attributes
 def parse(String description) {
-    log.debug "Parsing: ${msg}"
+    if (logEnable) log.debug "Parsing: ${msg}"
     def msg = parseThingShield(description)
 	def parts = []
     def name = ""
     def value = ""
 
 	try {
-    	log.debug "Parsing: ${msg}"
+    	if (logEnable) log.debug "Parsing: ${msg}"
     	parts = msg.split(" ")
     	name  = parts.length>0?parts[0].trim():null
     	value = parts.length>1?parts[1].trim():null
@@ -72,7 +82,7 @@ def parse(String description) {
     }
     
 	if (name != "ping") {  
-		log.debug "Parsing name: ${name}"
+		if (logEnable) log.debug "Parsing name: ${name}"
 		def nameparts = name.split("\\d+", 2)
 		def namebase = nameparts.length>0?nameparts[0].trim():null
         def namenum = name.substring(namebase.length()).trim()
@@ -80,15 +90,15 @@ def parse(String description) {
         def results = []
         
 		if (name.startsWith("button")) {
-			//log.debug "In parse:  name = ${name}, value = ${value}, btnName = ${name}, btnNum = ${namemun}"
+			//if (logEnable) log.debug "In parse:  name = ${name}, value = ${value}, btnName = ${name}, btnNum = ${namemun}"
         	results << createEvent(name: value, value: namenum, isStateChange: true)
-			log.debug results
+			if (logEnable) log.debug results
 			return results
         }
 
         def isChild = containsDigit(name)
-   		//log.debug "Name = ${name}, isChild = ${isChild}, namebase = ${namebase}, namenum = ${namenum}"      
-        //log.debug "parse() childDevices.size() =  ${childDevices.size()}"
+   		//if (logEnable) log.debug "Name = ${name}, isChild = ${isChild}, namebase = ${namebase}, namenum = ${namenum}"      
+        //if (logEnable) log.debug "parse() childDevices.size() =  ${childDevices.size()}"
 
 		def childDevice = null
 
@@ -96,34 +106,34 @@ def parse(String description) {
 
             childDevices.each {
 				try{
-            		//log.debug "1-Looking for child with deviceNetworkID = ${device.deviceNetworkId}-${name} against ${it.deviceNetworkId}"
+            		//if (logEnable) log.debug "1-Looking for child with deviceNetworkID = ${device.deviceNetworkId}-${name} against ${it.deviceNetworkId}"
                 	if (it.deviceNetworkId == "${device.deviceNetworkId}-${name}") {
                 	childDevice = it
-                    //log.debug "Found a match!!!"
+                    if (logEnable) log.debug "Found a match!!!"
                 	}
             	}
             	catch (e) {
-            	//log.debug e
+            	    log.error e
             	}
         	}
             
             //If a child should exist, but doesn't yet, automatically add it!            
         	if (isChild && childDevice == null) {
-        		//log.debug "isChild = true, but no child found - Auto Add it!"
-            	//log.debug "    Need a ${namebase} with id = ${namenum}"
+        		if (logEnable) log.debug "isChild = true, but no child found - Auto Add it!"
+            	if (logEnable) log.debug "    Need a ${namebase} with id = ${namenum}"
             
             	createChildDevice(namebase, namenum)
             	//find child again, since it should now exist!
             	childDevices.each {
 					try{
-            			//log.debug "2-Looking for child with deviceNetworkID = ${device.deviceNetworkId}-${name} against ${it.deviceNetworkId}"
+            			//if (logEnable) log.debug "2-Looking for child with deviceNetworkID = ${device.deviceNetworkId}-${name} against ${it.deviceNetworkId}"
                 		if (it.deviceNetworkId == "${device.deviceNetworkId}-${name}") {
                 			childDevice = it
-                    		log.debug "Found a match!!!"
+                    		if (logEnable) log.debug "Found a match!!!"
                 		}
             		}
             		catch (e) {
-            			//log.debug e
+            			log.error e
             		}
         		}
         	}
@@ -131,12 +141,12 @@ def parse(String description) {
             if (childDevice != null) {
                 //childDevice.generateEvent(namebase, value)
                 childDevice.parse("${namebase} ${value}")
-				log.debug "${childDevice.deviceNetworkId} - name: ${namebase}, value: ${value}"
+				if (logEnable) log.debug "${childDevice.deviceNetworkId} - name: ${namebase}, value: ${value}"
             }
             else  //must not be a child, perform normal update
             {
                 results = createEvent(name: name, value: value)
-                log.debug results
+                if (logEnable) log.debug results
                 return results
             }
 		}
@@ -166,7 +176,7 @@ def parseThingShield(String description) {
 }
 
 def sendData(String message) {
-    log.debug "sendData(${message}) called"
+    if (logEnable) log.debug "sendData(${message}) called"
     sendThingShield(message)
 }
 
@@ -177,29 +187,29 @@ def sendThingShield(String message) {
 
 // handle commands
 def configure() {
-	log.debug "Executing 'configure()'"
+	if (logEnable) log.debug "Executing 'configure()'"
     refresh()
 	sendEvent(name: "numberOfButtons", value: numButtons)
 }
 
 def refresh() {
-	log.debug "Executing 'refresh()'"
+	if (logEnable) log.debug "Executing 'refresh()'"
 	sendThingShield("refresh")
 }
 
 def installed() {
-	log.debug "Executing 'installed()'"
+	log.info "Executing 'installed()'"
 }
 
 def initialize() {
-	log.debug "Executing 'initialize()'"
+	log.info "Executing 'initialize()'"
     sendEvent(name: "numberOfButtons", value: numButtons)
 }
 
 def updated() {
 	if (!state.updatedLastRanAt || now() >= state.updatedLastRanAt + 5000) {
 		state.updatedLastRanAt = now()
-		log.debug "Executing 'updated()'"
+		log.info "Executing 'updated()'"
     	runIn(2, "refresh")
         //refresh()
 		sendEvent(name: "numberOfButtons", value: numButtons)
@@ -207,12 +217,14 @@ def updated() {
 	else {
 //		log.trace "updated(): Ran within last 5 seconds so aborting."
 	}
+    
+    if (logEnable) runIn(1800,logsOff)
 }
 
 
 private void createChildDevice(String deviceName, String deviceNumber) {
     
-		log.trace "createChildDevice:  Creating Child Device '${device.displayName} (${deviceName}${deviceNumber})'"
+		log.info "createChildDevice:  Creating Child Device '${device.displayName} (${deviceName}${deviceNumber})'"
         
 		try {
         	def deviceHandlerName = ""
@@ -280,6 +292,9 @@ private void createChildDevice(String deviceName, String deviceNumber) {
          		case "power": 
                 		deviceHandlerName = "Child Power Meter" 
                 	break
+         		case "energy": 
+                		deviceHandlerName = "Child Energy Meter" 
+                	break
          		case "servo": 
                 		deviceHandlerName = "Child Servo" 
                 	break
@@ -305,7 +320,7 @@ private boolean containsDigit(String s) {
     boolean containsDigit = false;
 
     if (s != null && !s.isEmpty()) {
-//		log.debug "containsDigit .matches = ${s.matches(".*\\d+.*")}"
+		//if (logEnable) log.debug "containsDigit .matches = ${s.matches(".*\\d+.*")}"
 		containsDigit = s.matches(".*\\d+.*")
     }
     return containsDigit

@@ -1,6 +1,8 @@
 /**
  *  Child Dimmer Switch
  *
+ *  https://raw.githubusercontent.com/DanielOgorchock/ST_Anything/master/HubDuino/Drivers/child-dimmer-switch.groovy
+ *
  *  Copyright 2017 Daniel Ogorchock
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
@@ -20,6 +22,7 @@
  *    2017-08-23  Allan (vseven) Added a generateEvent routine that gets info from the parent device.  This routine runs each time the value is updated which can lead to other modifications of the device.
  *    2018-05-19  Dan Ogorchock  Added support to receive the dimmer level from the microcontroller
  *    2018-06-02  Dan Ogorchock  Revised/Simplified for Hubitat Composite Driver Model
+ *    2018-09-22  Dan Ogorchock  Added preference for debug logging
  *
  * 
  */
@@ -36,6 +39,10 @@ metadata {
 
 	simulator {
 
+	}
+    
+    preferences {
+        input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: true
 	}
 
 	tiles(scale: 2) {
@@ -63,6 +70,11 @@ metadata {
 	}
 }
 
+def logsOff(){
+    log.warn "debug logging disabled..."
+    device.updateSetting("logEnable",[value:"false",type:"bool"])
+}
+
 def on() {
 	sendData("on")
 }
@@ -71,8 +83,8 @@ def off() {
 	sendData("off")
 }
 
-def setLevel(value) {
-	log.debug "setLevel >> value: $value"
+def setLevel(value,duration=null) {
+	if (logEnable) log.debug "setLevel >> value: $value"
 	def valueaux = value as Integer
 	def level = Math.max(Math.min(valueaux, 99), 0)
     sendData("${level}")
@@ -90,7 +102,7 @@ def sendData(String value) {
 }
 
 def parse(String description) {
-    log.debug "parse(${description}) called"
+    if (logEnable) log.debug "parse(${description}) called"
 	def parts = description.split(" ")
     def name  = parts.length>0?parts[0].trim():null
     def value = parts.length>1?parts[1].trim():null
@@ -108,9 +120,14 @@ def parse(String description) {
         sendEvent(name: "lastUpdated", value: nowDay + " at " + nowTime, displayed: false)
     }
     else {
-    	log.debug "Missing either name or value.  Cannot parse!"
+    	log.error "Missing either name or value.  Cannot parse!"
     }
 }
 
 def installed() {
+    updated()
+}
+
+def updated() {
+    if (logEnable) runIn(1800,logsOff)
 }

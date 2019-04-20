@@ -1,6 +1,8 @@
 /**
  *  Child Humidity Sensor
  *
+ *  https://raw.githubusercontent.com/DanielOgorchock/ST_Anything/master/HubDuino/Drivers/child-humidity-sensor.groovy
+ *
  *  Copyright 2017 Daniel Ogorchock
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
@@ -17,35 +19,38 @@
  *    Date        Who            What
  *    ----        ---            ----
  *    2017-04-10  Dan Ogorchock  Original Creation
- *	  2017-08-23  Allan (vseven) Added a generateEvent routine that gets info from the parent device.  This routine runs each time the value is updated which can lead to other modifications of the device.
- *	  2017-08-24  Allan (vseven) Added a lastUpdated attribute that will display on the multitile.
+ *    2017-08-23  Allan (vseven) Added a generateEvent routine that gets info from the parent device.  This routine runs each time the value is updated which can lead to other modifications of the device.
+ *    2017-08-24  Allan (vseven) Added a lastUpdated attribute that will display on the multitile.
  *    2017-09-09  Allan (vseven) Added preference to offset the humidity.
  *    2018-06-02  Dan Ogorchock  Revised/Simplified for Hubitat Composite Driver Model
+ *    2018-09-22  Dan Ogorchock  Added preference for debug logging
+ *    2019-03-05  Dan Ogorchock  Improved Rounding
  *
  * 
  */
 metadata {
-	definition (name: "Child Humidity Sensor", namespace: "ogiewon", author: "Daniel Ogorchock") {
-		capability "Relative Humidity Measurement"
-		capability "Sensor"
-        
+    definition (name: "Child Humidity Sensor", namespace: "ogiewon", author: "Daniel Ogorchock") {
+        capability "Relative Humidity Measurement"
+        capability "Sensor"
+	
         attribute "lastUpdated", "String"
-	}
+    }
 
-	simulator {
+    simulator {
 
-	}
+    }
     
-	preferences {
-		section("Prefs") {
-//			input title: "Humidity Offset", description: "This feature allows you to correct any humidity variations by selecting an offset. Ex: If your sensor consistently reports a humidity that's 6% higher then a similiar calibrated sensor, you'd enter \"-6\".", displayDuringSetup: false, type: "paragraph", element: "paragraph"
-			input "humidityOffset", "number", title: "Humidity Offset in Percent", description: "Adjust humidity by this percentage", range: "*..*", displayDuringSetup: false
-		}
-	}
+    preferences {
+        section("Prefs") {
+//          input title: "Humidity Offset", description: "This feature allows you to correct any humidity variations by selecting an offset. Ex: If your sensor consistently reports a humidity that's 6% higher then a similiar calibrated sensor, you'd enter \"-6\".", displayDuringSetup: false, type: "paragraph", element: "paragraph"
+            input "humidityOffset", "number", title: "Humidity Offset in Percent", description: "Adjust humidity by this percentage", range: "*..*", displayDuringSetup: false
+            input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: true
+        }
+    }
 
-	tiles(scale: 2) {
-		multiAttributeTile(name: "humidity", type: "generic", width: 6, height: 4, canChangeIcon: true) {
-			tileAttribute("device.humidity", key: "PRIMARY_CONTROL") {
+    tiles(scale: 2) {
+        multiAttributeTile(name: "humidity", type: "generic", width: 6, height: 4, canChangeIcon: true) {
+            tileAttribute("device.humidity", key: "PRIMARY_CONTROL") {
                 attributeState("humidity", label:'${currentValue}%', unit:"%", defaultState: true,
                     backgroundColors:[
                         [value: 0, color: "#635C0C"],
@@ -58,37 +63,48 @@ metadata {
                     ])
                 }
                 
-             tileAttribute("device.lastUpdated", key: "SECONDARY_CONTROL") {
-    			attributeState("default", label:'    Last updated ${currentValue}',icon: "st.Health & Wellness.health9")
+            tileAttribute("device.lastUpdated", key: "SECONDARY_CONTROL") {
+                attributeState("default", label:'    Last updated ${currentValue}',icon: "st.Health & Wellness.health9")
              }
-		}
-		main(["humidity"])
+        }
+        main(["humidity"])
         details(["humidity", "lastUpdated"])
-	}
+    }
+}
+
+def logsOff(){
+    log.warn "debug logging disabled..."
+    device.updateSetting("logEnable",[value:"false",type:"bool"])
 }
 
 def parse(String description) {
-    log.debug "parse(${description}) called"
-	def parts = description.split(" ")
+    if (logEnable) log.debug "parse(${description}) called"
+    def parts = description.split(" ")
     def name  = parts.length>0?parts[0].trim():null
     def value = parts.length>1?parts[1].trim():null
     if (name && value) {
         // Offset the humidity based on preference
-        def offsetValue = Math.round((Float.parseFloat(value))*100.0)/100.0d
+        float tmpValue = Float.parseFloat(value)
         if (humidityOffset) {
-            offsetValue = offsetValue + humidityOffset
+            tmpValue = tmpValue + humidityOffset
         }
         // Update device
-        sendEvent(name: name, value: offsetValue)
+        tmpValue = tmpValue.round(1)
+        sendEvent(name: name, value: tmpValue)
         // Update lastUpdated date and time
         def nowDay = new Date().format("MMM dd", location.timeZone)
         def nowTime = new Date().format("h:mm a", location.timeZone)
         sendEvent(name: "lastUpdated", value: nowDay + " at " + nowTime, displayed: false)
     }
     else {
-    	log.debug "Missing either name or value.  Cannot parse!"
+    	log.error "Missing either name or value.  Cannot parse!"
     }
 }
 
 def installed() {
+    updated()
+}
+
+def updated() {
+    if (logEnable) runIn(1800,logsOff)
 }

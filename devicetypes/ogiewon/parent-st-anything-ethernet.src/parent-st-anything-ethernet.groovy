@@ -34,7 +34,13 @@
  *    2018-06-24  Dan Ogorchock  Added Child Servo
  *    2018-07-01  Dan Ogorchock  Added Pressure Measurement
  *    2018-08-06  Dan Ogorchock  Added MAC Address formatting before setting deviceNetworkID
+<<<<<<< HEAD
  *  
+=======
+ *    2019-02-05  Dan Ogorchock  Added Child Energy Meter
+ *    2019-02-09  Dan Ogorchock  Attempt to prevent duplicate devices from being created
+ *	
+>>>>>>> b246ef70d1bfc7dcd7529fe2d9390e4016644d0c
  */
  
 metadata {
@@ -239,6 +245,7 @@ def installed() {
         state.alertMessage = "ST_Anything Parent Device has not yet been fully configured. Click the 'Gear' icon, enter data for all fields, and click 'Done'"
         runIn(2, "sendAlert")
     }
+    state.lastChildCreated = "none"
 }
 
 def initialize() {
@@ -269,8 +276,9 @@ def updateDeviceNetworkID() {
         device.setDeviceNetworkId("${formattedMac}")
     }
     //Need deviceNetworkID updated BEFORE we can create Child Devices
-    //Have the Arduino send an updated value for every device attached.  This will auto-created child devices!
-    refresh()
+	//Have the Arduino send an updated value for every device attached.  This will auto-created child devices!
+    state.lastChildCreated = "none"
+	refresh()
 }
 
 private void createChildDevice(String deviceName, String deviceNumber) {
@@ -278,95 +286,99 @@ private void createChildDevice(String deviceName, String deviceNumber) {
     
         log.trace "createChildDevice:  Creating Child Device '${device.displayName} (${deviceName}${deviceNumber})'"
         
-        try {
-            def deviceHandlerName = ""
-            switch (deviceName) {
-                case "bling": 
+		try {
+        	def deviceHandlerName = ""
+        	switch (deviceName) {
+                case "blind": 
                         deviceHandlerName = "Child Blind" 
-                    break                
-                case "contact": 
-                        deviceHandlerName = "Child Contact Sensor" 
                     break
-                case "switch": 
-                        deviceHandlerName = "Child Switch" 
-                    break
-                case "dimmerSwitch": 
-                        deviceHandlerName = "Child Dimmer Switch" 
-                    break
-                case "rgbSwitch": 
-                        deviceHandlerName = "Child RGB Switch" 
-                    break
-                case "generic": 
-                        deviceHandlerName = "Child Generic Sensor" 
-                    break
-                case "rgbwSwitch": 
-                        deviceHandlerName = "Child RGBW Switch" 
-                    break
-                case "relaySwitch": 
-                        deviceHandlerName = "Child Relay Switch" 
-                    break
-                case "temperature": 
-                        deviceHandlerName = "Child Temperature Sensor" 
-                    break
-                case "humidity": 
-                        deviceHandlerName = "Child Humidity Sensor" 
-                    break
-                case "motion": 
-                        deviceHandlerName = "Child Motion Sensor" 
-                    break
-                case "water": 
-                        deviceHandlerName = "Child Water Sensor" 
-                    break
-                case "illuminance": 
-                        deviceHandlerName = "Child Illuminance Sensor" 
-                    break
-                case "illuminancergb": 
-                        deviceHandlerName = "Child IlluminanceRGB Sensor" 
-                    break
-                case "voltage": 
-                        deviceHandlerName = "Child Voltage Sensor" 
-                    break
-                case "smoke": 
-                        deviceHandlerName = "Child Smoke Detector" 
-                    break    
-                case "carbonMonoxide": 
-                        deviceHandlerName = "Child Carbon Monoxide Detector" 
-                    break    
-                case "alarm": 
-                        deviceHandlerName = "Child Alarm" 
-                    break    
-                case "doorControl": 
-                        deviceHandlerName = "Child Door Control" 
-                    break
-                case "ultrasonic": 
-                        deviceHandlerName = "Child Ultrasonic Sensor" 
-                    break
-                case "presence": 
-                        deviceHandlerName = "Child Presence Sensor" 
-                    break
-                case "power": 
-                        deviceHandlerName = "Child Power Meter" 
-                    break
-                case "servo": 
-                        deviceHandlerName = "Child Servo" 
-                    break
-                case "pressure": 
-                        deviceHandlerName = "Child Pressure Measurement" 
-                    break
-            default: 
-                        log.error "No Child Device Handler case for ${deviceName}"
-            }
-            if (deviceHandlerName != "") {
+         		case "contact": 
+                		deviceHandlerName = "Child Contact Sensor" 
+                	break
+         		case "switch": 
+                		deviceHandlerName = "Child Switch" 
+                	break
+         		case "dimmerSwitch": 
+                		deviceHandlerName = "Child Dimmer Switch" 
+                	break
+         		case "rgbSwitch": 
+                		deviceHandlerName = "Child RGB Switch" 
+                	break
+         		case "generic": 
+                		deviceHandlerName = "Child Generic Sensor" 
+                	break
+         		case "rgbwSwitch": 
+                		deviceHandlerName = "Child RGBW Switch" 
+                	break
+         		case "relaySwitch": 
+                		deviceHandlerName = "Child Relay Switch" 
+                	break
+         		case "temperature": 
+                		deviceHandlerName = "Child Temperature Sensor" 
+                	break
+         		case "humidity": 
+                		deviceHandlerName = "Child Humidity Sensor" 
+                	break
+         		case "motion": 
+                		deviceHandlerName = "Child Motion Sensor" 
+                	break
+         		case "water": 
+                		deviceHandlerName = "Child Water Sensor" 
+                	break
+         		case "illuminance": 
+                		deviceHandlerName = "Child Illuminance Sensor" 
+                	break
+         		case "illuminancergb": 
+                		deviceHandlerName = "Child IlluminanceRGB Sensor" 
+                	break
+         		case "voltage": 
+                		deviceHandlerName = "Child Voltage Sensor" 
+                	break
+         		case "smoke": 
+                		deviceHandlerName = "Child Smoke Detector" 
+                	break    
+         		case "carbonMonoxide": 
+                		deviceHandlerName = "Child Carbon Monoxide Detector" 
+                	break    
+         		case "alarm": 
+                		deviceHandlerName = "Child Alarm" 
+                	break    
+         		case "doorControl": 
+                		deviceHandlerName = "Child Door Control" 
+                	break
+         		case "ultrasonic": 
+                		deviceHandlerName = "Child Ultrasonic Sensor" 
+                	break
+         		case "presence": 
+                		deviceHandlerName = "Child Presence Sensor" 
+                	break
+         		case "power": 
+                		deviceHandlerName = "Child Power Meter" 
+                	break
+         		case "energy": 
+                		deviceHandlerName = "Child Energy Meter" 
+                	break
+         		case "servo": 
+                		deviceHandlerName = "Child Servo" 
+                	break
+         		case "pressure": 
+                		deviceHandlerName = "Child Pressure Measurement" 
+                	break
+			default: 
+                		log.error "No Child Device Handler case for ${deviceName}"
+      		}
+            if ((deviceHandlerName != "") && (state.lastChildCreated != "${device.deviceNetworkId}-${deviceName}${deviceNumber}")) {
                 addChildDevice(deviceHandlerName, "${device.deviceNetworkId}-${deviceName}${deviceNumber}", null,
-                    [completedSetup: true, label: "${device.displayName} (${deviceName}${deviceNumber})", 
-                    isComponent: false, componentName: "${deviceName}${deviceNumber}", componentLabel: "${deviceName} ${deviceNumber}"])
-            }   
-        } catch (e) {
-            log.error "Child device creation failed with error = ${e}"
-            state.alertMessage = "Child device creation failed. Please make sure that the '${deviceHandlerName}' is installed and published."
-            runIn(2, "sendAlert")
-        }
-    } else 
+         			[completedSetup: true, label: "${device.displayName} (${deviceName}${deviceNumber})", 
+                	isComponent: false, componentName: "${deviceName}${deviceNumber}", componentLabel: "${deviceName} ${deviceNumber}"])
+                state.lastChildCreated = "${device.deviceNetworkId}-${deviceName}${deviceNumber}"
+        	}   
+    	} catch (e) {
+        	log.error "Child device creation failed with error = ${e}"
+        	state.alertMessage = "Child device creation failed. Please make sure that the '${deviceHandlerName}' is installed and published."
+	    	runIn(2, "sendAlert")
+    	}
+	} else 
     {
         state.alertMessage = "ST_Anything Parent Device has not yet been fully configured. Click the 'Gear' icon, enter data for all fields, and click 'Done'"
         runIn(2, "sendAlert")
