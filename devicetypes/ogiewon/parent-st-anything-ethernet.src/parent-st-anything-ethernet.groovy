@@ -34,13 +34,9 @@
  *    2018-06-24  Dan Ogorchock  Added Child Servo
  *    2018-07-01  Dan Ogorchock  Added Pressure Measurement
  *    2018-08-06  Dan Ogorchock  Added MAC Address formatting before setting deviceNetworkID
-<<<<<<< HEAD
- *  
-=======
  *    2019-02-05  Dan Ogorchock  Added Child Energy Meter
  *    2019-02-09  Dan Ogorchock  Attempt to prevent duplicate devices from being created
  *	
->>>>>>> b246ef70d1bfc7dcd7529fe2d9390e4016644d0c
  */
  
 metadata {
