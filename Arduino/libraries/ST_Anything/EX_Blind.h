@@ -36,12 +36,13 @@ namespace st
 			bool m_bInvertLogic;	//determines whether the Arduino Digital Output should use inverted logic
 			byte m_nPin;			//Arduino Pin used as a Digital Output for up
             byte m_dPin;            //Arduino Pin used as a Digital Output for Down
+			byte m_sPin;			//Arduino Pin used as a Digital Output for the My Button
 		
 			void writeStateToPin();	//function to update the Arduino Digital Output Pin
 		
 		public:
 			//constructor - called in your sketch's global variable declaration section
-			EX_Blind(const __FlashStringHelper *name, byte upin, byte dpin, bool startingState = LOW, bool invertLogic = false);
+			EX_Blind(const __FlashStringHelper *name, byte upin, byte dpin, byte spin, bool startingState = LOW, bool invertLogic = false);
 			
 			//destructor
 			virtual ~EX_Blind();
@@ -61,7 +62,7 @@ namespace st
 			virtual bool getStatus() const { return m_bCurrentState; }	//whether the switch is HIGH or LOW
 
 			//sets
-			virtual void setPin(byte upin, byte dpin);
+			virtual void setPin(byte upin, byte dpin, byte spin);
 		
 	};
 }

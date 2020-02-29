@@ -52,12 +52,12 @@ namespace st
 
 //public
 	//constructor
-	EX_Blind::EX_Blind(const __FlashStringHelper *name, byte upin, byte dpin, bool startingState, bool invertLogic) :
+	EX_Blind::EX_Blind(const __FlashStringHelper *name, byte upin, byte dpin, byte spin, bool startingState, bool invertLogic) :
 		Executor(name),
 		m_bCurrentState(startingState),
 		m_bInvertLogic(invertLogic)
 	{
-		setPin(upin, dpin);
+		setPin(upin, dpin, spin);
 	}
 
 	//destructor
@@ -89,12 +89,11 @@ namespace st
 		}
         else if(s==F("stop"))
         {
-            byte stop_pin = 14;
-            pinMode(stop_pin, OUTPUT);
+            pinMode(m_sPin, OUTPUT);
             if (st::Executor::debug) {Serial.println(F("EX_Blind::My"));}
-            digitalWrite(stop_pin, m_bInvertLogic ? HIGH : LOW);
+            digitalWrite(m_sPin, m_bInvertLogic ? HIGH : LOW);
             delay(500);
-            digitalWrite(stop_pin, m_bInvertLogic ? LOW : HIGH);
+            digitalWrite(m_sPin, m_bInvertLogic ? LOW : HIGH);
             return;
         }
         
@@ -108,7 +107,7 @@ namespace st
 		Everything::sendSmartString(getName() + " " + (m_bCurrentState == HIGH?F("open"):F("closed")));
 	}
 	
-	void EX_Blind::setPin(byte upin, byte dpin)
+	void EX_Blind::setPin(byte upin, byte dpin, byte spin)
 	{
 		m_nPin=upin;
 		pinMode(m_nPin, OUTPUT);
@@ -116,5 +115,6 @@ namespace st
         m_dPin=dpin;
         pinMode(m_dPin, OUTPUT);
         digitalWrite(m_dPin, m_bInvertLogic ? LOW : HIGH);
+		m_sPin = spin;
 	}
 }

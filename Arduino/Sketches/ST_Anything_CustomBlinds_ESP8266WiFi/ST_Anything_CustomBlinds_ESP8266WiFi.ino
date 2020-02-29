@@ -1,30 +1,6 @@
 //******************************************************************************************
-//  File: ST_Anything_AlarmPanel_ESP8266WiFi.ino
-//  Authors: Dan G Ogorchock & Daniel J Ogorchock (Father and Son)
-//
-//  Summary:  This Arduino Sketch, along with the ST_Anything library and the revised SmartThings 
-//            library, demonstrates the ability of one NodeMCU ESP8266 to 
-//            implement a multi input/output custom device for integration into SmartThings.
-//            The ST_Anything library takes care of all of the work to schedule device updates
-//            as well as all communications with the NodeMCU ESP8266's WiFi.
-//
-//            ST_Anything_AlarmPanel implements the following ST Capabilities as a demo of replacing an alarm panel with a single NodeMCU ESP8266
-//              - 7 x Contact Sensor devices (used to monitor magnetic door sensors)
-//              - 1 x Motion device (using simple digital input)
-//              - 1 x Smoke Detector devices (using simple digital input)
-//              - 1 x Alarm (Siren only) device (using a simple digital output attached to a relay)
-//    
-//  Change History:
-//
-//    Date        Who            What
-//    ----        ---            ----
-//    2017-04-26  Dan Ogorchock  Original Creation
-//    2018-02-09  Dan Ogorchock  Added support for Hubitat Elevation Hub
-//
-//******************************************************************************************
-//******************************************************************************************
-// SmartThings Library for ESP8266WiFi
-//******************************************************************************************
+//  Original File: ST_Anything_AlarmPanel_ESP8266WiFi.ino
+
 #include <SmartThingsESP8266WiFi.h>
 
 //******************************************************************************************
@@ -38,20 +14,7 @@
 #include <PollingSensor.h>   //Generic Polling "Sensor" Class, polls Arduino pins periodically
 #include <Everything.h>      //Master Brain of ST_Anything library that ties everything together and performs ST Shield communications
 
-#include <PS_Illuminance.h>  //Implements a Polling Sensor (PS) to measure light levels via a photo resistor on an analog input pin 
-#include <PS_Voltage.h>      //Implements a Polling Sensor (PS) to measure voltage on an analog input pin 
-#include <PS_TemperatureHumidity.h>  //Implements a Polling Sensor (PS) to measure Temperature and Humidity via DHT library
-#include <PS_Water.h>        //Implements a Polling Sensor (PS) to measure presence of water (i.e. leak detector) on an analog input pin 
-#include <IS_Motion.h>       //Implements an Interrupt Sensor (IS) to detect motion via a PIR sensor on a digital input pin
-#include <IS_Contact.h>      //Implements an Interrupt Sensor (IS) to monitor the status of a digital input pin
-#include <IS_Smoke.h>        //Implements an Interrupt Sensor (IS) to monitor the status of a digital input pin
-#include <IS_CarbonMonoxide.h> //Implements an Interrupt Sensor (IS) to monitor the status of a digital input pin
-#include <IS_DoorControl.h>  //Implements an Interrupt Sensor (IS) and Executor to monitor the status of a digital input pin and control a digital output pin
-#include <IS_Button.h>       //Implements an Interrupt Sensor (IS) to monitor the status of a digital input pin for button presses
-#include <EX_Switch.h>       //Implements an Executor (EX) via a digital output to a relay
-#include <EX_Alarm.h>        //Implements Executor (EX)as an Alarm capability with Siren and Strobe via digital outputs to relays
 #include <EX_Blind.h>        //Implements Executor (EX)as an Blind capability
-#include <S_TimedRelay.h>    //Implements a Sensor to control a digital output pin with timing/cycle repeat capabilities
 
 //*************************************************************************************************
 //NodeMCU v1.0 ESP8266-12e Pin Definitions (makes it much easier as these match the board markings)
@@ -77,18 +40,13 @@
 #define PIN_UP               D6  //SmartThings Capabilty "Alarm"
 #define PIN_DOWN               D7  //
 #define PIN_MY                     D5  //My Button
-//#define PIN_CONTACT_1             D1  //SmartThings Capabilty "Contact Sensor"
-//#define PIN_CONTACT_2             D2  //SmartThings Capabilty "Contact Sensor"
-//#define PIN_CONTACT_3             D5  //SmartThings Capabilty "Contact Sensor"
-//#define PIN_CONTACT_4             D6  //SmartThings Capabilty "Contact Sensor"
-//#define PIN_CONTACT_5             D7  //SmartThings Capabilty "Contact Sensor"
 
 
 //******************************************************************************************
 //ESP8266 WiFi Information
 //******************************************************************************************
-String str_ssid     = "";                       //  <---You must edit this line!
-String str_password = "";       //  <---You must edit this line!
+String str_ssid     = "313Smarts";                       //  <---You must edit this line!
+String str_password = "SmartThings";       //  <---You must edit this line!
 //IPAddress ip(192, 168, 3, 234);       //Device IP Address       //  <---You must edit this line!
 //IPAddress gateway(192, 168, 3, 1);    //Router gateway          //  <---You must edit this line!
 //IPAddress subnet(255, 255, 255, 0);   //LAN subnet mask         //  <---You must edit this line!
@@ -140,18 +98,8 @@ void setup()
   //           device (e.g. contact1, contact2, contact3, etc...)  You can rename the Child Devices
   //           to match your specific use case in the ST Phone Application.
   //******************************************************************************************
-  //Polling Sensors
-    
-  //Interrupt Sensors 
-//  static st::IS_Contact             sensor1(F("contact1"), PIN_CONTACT_1, LOW, true, 500);
-// static st::IS_Contact             sensor2(F("contact2"), PIN_CONTACT_2, LOW, true, 500);
-//static st::IS_Contact             sensor3(F("contact3"), PIN_CONTACT_3, LOW, true, 500);
-//  static st::IS_Contact             sensor4(F("contact4"), PIN_CONTACT_4, LOW, true, 500);
-//  static st::IS_Contact             sensor5(F("contact5"), PIN_CONTACT_5, LOW, true, 500);
-
-  
   //Executors
-  static st::EX_Blind               executor1(F("blind1"), PIN_UP, PIN_DOWN, LOW, false);
+  static st::EX_Blind               executor1(F("blind1"), PIN_UP, PIN_DOWN, PIN_MY, LOW, false);
   
   //*****************************************************************************
   //  Configure debug print output from each main class 
@@ -160,9 +108,9 @@ void setup()
   //*****************************************************************************
   st::Everything::debug=true;
   st::Executor::debug=true;
-  st::Device::debug=true;
-  st::PollingSensor::debug=true;
-  st::InterruptSensor::debug=true;
+  st::Device::debug=false;
+  st::PollingSensor::debug=false;
+  st::InterruptSensor::debug=false;
 
   //*****************************************************************************
   //Initialize the "Everything" Class
@@ -180,15 +128,6 @@ void setup()
 
   //Run the Everything class' init() routine which establishes WiFi communications with SmartThings Hub
   st::Everything::init();
-    
-  //*****************************************************************************
-  //Add each sensor to the "Everything" Class
-  //*****************************************************************************
-  //st::Everything::addSensor(&sensor1);
-  //st::Everything::addSensor(&sensor2);
-  //st::Everything::addSensor(&sensor3);
-  //st::Everything::addSensor(&sensor4); 
-  //st::Everything::addSensor(&sensor5); 
        
   //*****************************************************************************
   //Add each executor to the "Everything" Class
